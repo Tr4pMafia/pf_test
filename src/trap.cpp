@@ -24,7 +24,6 @@
 #include <bfstring.h>
 #include <string>
 #include <vector>
-#include<consts.h>
 
 namespace mafia
 {
