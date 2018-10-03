@@ -1,7 +1,4 @@
-# Bareflank Hypervisor Trap SystemCall
-This project is for trapping SystemCall.
-## Description
-Trap SystemCall for Current Version of Bareflank Hypervisor
+# Bareflank Hypervisor PF test
 
 ## Compilation / Usage
 
