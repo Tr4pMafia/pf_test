@@ -35,19 +35,6 @@ static bool trap_pf(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs) noexcept
 {
     using namespace ::intel_x64::vmcs;
 
-    vm_entry_interruption_information::vector::set(vm_exit_interruption_information::vector::get());
-    vm_entry_interruption_information::interruption_type::set(vm_entry_interruption_information::interruption_type::hardware_exception);
-    vm_entry_interruption_information::valid_bit::enable();
-    vm_entry_interruption_information::deliver_error_code_bit::enable();
-    vm_entry_exception_error_code::set(vm_exit_interruption_error_code::get());
-    ::intel_x64::cr2::set(::intel_x64::cr2::get());
-
-
-    // page fault orrcured when instruction fetch
-    if ((vm_exit_interruption_error_code::get() & (1u << 4)) == (1u << 4)){
-        ::intel_x64::cr2::set(vmcs->save_state()->rip);
-    }
-
     if(pf_count < 2){
         // vmexit
         vm_exit_interruption_information::dump(0);
@@ -60,11 +47,25 @@ static bool trap_pf(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs) noexcept
         vm_entry_exception_error_code::dump(0);
 
         // cr2 and rip
-        bfdebug_nhex(0, "cr2", cr2);
+        bfdebug_nhex(0, "cr2", ::intel_x64::cr2::get());
         bfdebug_nhex(0, "rip", vmcs->save_state()->rip);
         pf_count++;
     }
 
+
+    vm_entry_interruption_information::vector::set(vm_exit_interruption_information::vector::get());
+    vm_entry_interruption_information::interruption_type::set(vm_entry_interruption_information::interruption_type::hardware_exception);
+    vm_entry_interruption_information::valid_bit::enable();
+    vm_entry_interruption_information::deliver_error_code_bit::enable();
+    vm_entry_exception_error_code::set(vm_exit_interruption_error_code::get());
+    ::intel_x64::cr2::set(::intel_x64::cr2::get());
+
+
+    // page fault orrcured when instruction fetch
+    if ((vm_exit_interruption_error_code::get() & (1u << 4)) == (1u << 4)){
+        ::intel_x64::cr2::set(vmcs->save_state()->rip);
+    }
+    
     return true;
 }
 class mafia_vcpu : public bfvmm::intel_x64::vcpu
@@ -80,8 +81,8 @@ public:
 
         // trap page fault
         ::intel_x64::vmcs::exception_bitmap::set((1u << 14));
-        ::intel_x64::vmcs::page_fault_error_code_mask::set(0);
-        ::intel_x64::vmcs::page_fault_error_code_match::set(0);
+        ::intel_x64::vmcs::page_fault_error_code_mask::set((1u << 4));
+        ::intel_x64::vmcs::page_fault_error_code_match::set((1u << 4));
     }
     ~mafia_vcpu() = default;
 };
